@@ -11,12 +11,53 @@ from statsmodels.tsa.api import VAR
 import argparse
 
 
+def gci(df):
+    """
+    :param df: time series file for one subject
+    :return:granger causality index matrix
+
+    Traditional granger causality index calculation without using the large scale granger causality algorithm.
+    No feature reduction via PCA
+    """
+    _, rois = df.shape
+    X = df.to_numpy()  #
+    Xn = normalize(X)  # normalize X
+
+
+    mvar = VAR(Xn)
+    results = mvar.fit(2)  # fit model with maxlag of 2
+
+    E_hat = results.resid
+
+    GCI = np.zeros((rois, rois))
+    for i in range(rois):
+        GCI[i, i] = 1
+
+        X_iMinus = np.delete(Xn, i, 1)  # remove ith column from X
+        mvar_minus = VAR(X_iMinus)  # initialise new model with X_iminus
+        results_minus = mvar_minus.fit(2)  # fit model with maxlag of 2
+
+        E_m = results_minus.resid  # get error matrix of predictions without ith feature
+        E_minus = np.insert(E_m, i, 0, axis=1) # add a dummy column at removed column
+
+        for j in range(rois):
+            if j != i:
+                gci = np.log(np.var(E_minus[:, j]) / np.var(E_hat[:, j]))
+
+                GCI[j, i] = max(gci, 0)  # from i to j at [j,i] insert calculate gci
+            else:
+                continue
+
+    return GCI
+
+
 def large_scale_gci(df, is_pd=True):
     if is_pd:
         X = df.to_numpy()  #
         Xn = normalize(X)  # normalize X
     else:
         Xn = normalize(df)
+    roi_number = Xn.shape[-1]
 
     cov = np.cov(Xn, rowvar=False)  # construct covariance matrix of features, state that feature data is not in row
     eigval, eigvec = eigh(cov)  # eigenvalue decomposition, eval(eigenvalues), eigvec(eigenvectors) is a matrix of
@@ -35,8 +76,8 @@ def large_scale_gci(df, is_pd=True):
     W_plus = pinv(W_c)  # get pseudo inverse of projection matrix
     E_hat = Xn - np.dot(z_hat, W_plus)
 
-    lsGCI = np.zeros((200, 200))
-    for i in range(200):
+    lsGCI = np.zeros((roi_number, roi_number))
+    for i in range(roi_number):
         lsGCI[i, i] = 1
         X_iMinus = np.delete(Xn, i, 1)  # remove ith column from X remove feature from HD space
         W_iMinus = np.delete(W_c, i, 0)  # Remove ith row from projection matrix W
@@ -50,8 +91,9 @@ def large_scale_gci(df, is_pd=True):
         E_m = X_iMinus - np.dot(z_m_hat, W_m_plus)  # get error matrix of predictions without ith feature
         E_minus = np.insert(E_m, i, 0, axis=1)  # add a dummy column at removed column
 
-        for j in range(200):
+        for j in range(roi_number):
             if j != i:
+
                 GCI = np.log(np.var(E_minus[:, j]) / np.var(E_hat[:, j]))
                 lsGCI[i, j] = max(GCI, 0)  # from i to j
             else:
@@ -60,7 +102,7 @@ def large_scale_gci(df, is_pd=True):
     return lsGCI
 
 
-def main(df_path, roi_dir, gci_dir, extension):
+def main(df_path, roi_dir, gci_dir, extension, large_scale):
     pheno_df = pd.read_csv(df_path)
 
     subjects = pheno_df.FILE_ID
@@ -82,7 +124,11 @@ def main(df_path, roi_dir, gci_dir, extension):
         else:
             data = np.load(os.path.join(gci_dir, file))
 
-        gci_matrix = large_scale_gci(data)
+        if large_scale:
+            gci_matrix = large_scale_gci(data)
+        else:
+            gci_matrix = gci(data)
+
         np.save(matrix_path, gci_matrix)
 
 
@@ -95,7 +141,9 @@ if __name__ == '__main__':
     parser.add_argument('--data', help='path to time series data directory', type=pathlib.Path)
     parser.add_argument('--save', help='save directory path', type=pathlib.Path)
     parser.add_argument('--suffix', help='file name suffix after id', type=str)
+    parser.add_argument('--large', help='calculate large scale index or not', action='store_true')
+    parser.add_argument('--no-large', dest='foo', action='store_false')
 
     args = parser.parse_args()
 
-    main(df_path=args.df, roi_dir=args.data, gci_dir=args.save, extension=args.save)
+    main(df_path=args.df, roi_dir=args.data, gci_dir=args.save, extension=args.suffix, large_scale=args.large)

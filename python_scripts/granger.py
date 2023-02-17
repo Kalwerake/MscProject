@@ -7,19 +7,18 @@ from numpy.linalg import eigh, pinv
 from statsmodels.tsa.api import VAR
 import pickle
 
-roi_dir = os.path.join(os.getcwd(), 'rois_aal')
-pheno_path = os.path.join(os.getcwd(), 'phenotype_files', 'aal_nn.csv')
+roi_dir = os.path.join(os.getcwd(), 'rois_cc200')
+pheno_path = os.path.join(os.getcwd(), 'phenotype_files', 'pheno_nn.csv')
 
 pheno_df = pd.read_csv(pheno_path)
 
+roi_files = pheno_df.CC200
 subjects = pheno_df.FILE_ID
-aal_files = [i + '_rois_aal.1D' for i in subjects]
 
 fetch = FetchROI(roi_dir)
 
 
-def large_scale_gci(df, file_name):
-    _, rois = df.shape
+def large_scale_gci(df):
     X = df.to_numpy()  #
     Xn = normalize(X)  # normalize X
     cov = np.cov(Xn, rowvar=False)  # construct covariance matrix of features, state that feature data is not in row
@@ -39,8 +38,8 @@ def large_scale_gci(df, file_name):
     W_plus = pinv(W_c)  # get pseudo inverse of projection matrix
     E_hat = Xn - np.dot(z_hat, W_plus)
 
-    lsGCI = np.zeros((rois, rois))
-    for i in range(rois):
+    lsGCI = np.zeros((200, 200))
+    for i in range(200):
         lsGCI[i, i] = 1
         X_iMinus = np.delete(Xn, i, 1)  # remove ith column from X remove feature from HD space
         W_iMinus = np.delete(W_c, i, 0)  # Remove ith row from projection matrix W
@@ -54,23 +53,25 @@ def large_scale_gci(df, file_name):
         E_m = X_iMinus - np.dot(z_m_hat, W_m_plus)  # get error matrix of predictions without ith feature
         E_minus = np.insert(E_m, i, 0, axis=1)  # add a dummy column at removed column
 
-        for j in range(rois):
+        for j in range(200):
             if j != i:
                 GCI = np.log(np.var(E_minus[:, j]) / np.var(E_hat[:, j]))
                 lsGCI[i, j] = max(GCI,0)  # from i to j
+            else:
+                continue
 
     return lsGCI
 
 
-gci_dir = os.path.join(os.getcwd(), 'gci_aal')
+gci_dir = os.path.join(os.getcwd(), 'gci_cc200')
 os.mkdir(gci_dir)
 
-for i, file in enumerate(aal_files):
-    matrix_name = subjects[i] + '_gci_aal.pkl'
+for i, file in enumerate(roi_files):
+    matrix_name = subjects[i] + '_gci.pkl'
     matrix_path = os.path.join(gci_dir, matrix_name)
     data = fetch.fetch_roi_avg_ts(file)
 
-    gci_matrix = large_scale_gci(data, file)
+    gci_matrix = large_scale_gci(data)
     with open(matrix_path, 'wb') as d:
         pickle.dump(gci_matrix, d, protocol=pickle.HIGHEST_PROTOCOL)
 

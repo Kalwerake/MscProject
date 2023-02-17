@@ -1,0 +1,40 @@
+# Environment
+venv/
+
+.DS_Store
+
+#data directories
+papers/
+rois_aal/
+rois_cc200/
+augmented_dataset/
+dfc_aug/
+dfc_cc200_70
+func_ABIDE/
+gci_aal/
+gci_cc200/
+gci_nls_cc200/
+gci_aal_vectorised.npy
+gci_cc200_vectorised.npy
+gci_nls_cc200_vector.npy
+time_fig.png
+model_evaluation
+images
+conv4d.py
+# scrap notebooks
+CRNN5_1_1.ipynb
+CRNN5_mc.ipynb
+CRNN6.ipynb
+CRNN9.ipynb
+CRNN_dfc.ipynb
+dataset_explore.ipynb
+EDA.ipynb
+embedding.ipynb
+gru only.ipynb
+mne_inverse_label_connectivity.ipynb
+plot_extract_regions_dictlearning_maps (1).ipynb
+surr_vectorise.ipynb
+.ipynb_checkpoints
+missing_value_explore.ipynb
+network_graphs.ipynb
+raw fmri.ipynb

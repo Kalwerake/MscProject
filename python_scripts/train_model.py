@@ -1,7 +1,5 @@
 import torch
 import pandas as pd
-import numpy as np
-import os
 import pickle
 
 from nn_functions import train_one_epoch_binary, validate_one_epoch_binary, EarlyStopper
@@ -81,10 +79,6 @@ def main(train_path, test_path, data_dir, batch_size, lr, epochs, workers, model
 
         if early_stop and early_stopper.early_stop(test_loss):
             break
-
-        if (i + 1) % 10 == 0:
-            print(
-                f'Epoch {i + 1} train_loss: {round(train_loss, 2)}, accuracy: {round(train_acc, 2)}, test_loss:{round(test_loss, 2)}, test_acc: {round(test_acc, 2)} ')
 
     torch.save(model.state_dict(), model_save)
 

@@ -46,3 +46,111 @@ class CRNN5(nn.Module):
         x = self.seq_dense(x)
 
         return x
+
+
+class CNN3D(nn.Module):
+    def __init__(self):
+        super(CNN3D, self).__init__()
+
+        self.seq_cnn = nn.Sequential(
+            nn.Conv3d(in_channels=1, out_channels=5, kernel_size=(3, 3, 3), stride=(1, 1, 1), dilation=3),
+            nn.ReLU(),
+            nn.MaxPool3d(kernel_size=(2, 2, 2), stride=(2, 2, 2)),
+            nn.Conv3d(in_channels=5, out_channels=25, kernel_size=(3, 3, 3), stride=(1, 1, 1), dilation=3),
+            nn.ReLU(),
+            nn.MaxPool3d(kernel_size=(2, 2, 2), stride=(2, 2, 2)),
+            nn.Conv3d(in_channels=25, out_channels=125, kernel_size=(3, 3, 3), stride=1, dilation=3),
+            nn.ReLU(),
+            nn.MaxPool3d(kernel_size=(2, 2, 2), stride=(2, 2, 2)),
+            nn.Conv3d(in_channels=125, out_channels=125, kernel_size=(3, 3, 3), stride=1, dilation=3),
+            nn.ReLU(),
+            nn.AdaptiveAvgPool3d(output_size=(1, 1, 1)))
+
+        # Fully connected layer
+        self.seq_dense = nn.Sequential(
+            nn.Linear(125, 1),
+            nn.Sigmoid())
+
+    def forward(self, x):
+        x = self.seq_cnn(x)
+
+        x = torch.flatten(x, start_dim=1, end_dim=4)  # reduce dimensionality for LSTM layer, to 3D tensor
+        x = self.seq_dense(x)
+
+        return x
+
+
+class CNN3D_2(nn.Module):
+    def __init__(self):
+        super(CNN3D_2, self).__init__()
+
+        self.seq_cnn = nn.Sequential(
+            nn.Conv3d(in_channels=1, out_channels=5, kernel_size=(3, 3, 3), stride=(1, 1, 1), dilation=3),
+            nn.ReLU(),
+            nn.MaxPool3d(kernel_size=(2, 2, 2), stride=(2, 2, 2)),
+            nn.Conv3d(in_channels=5, out_channels=25, kernel_size=(3, 3, 3), stride=(1, 1, 1), dilation=3),
+            nn.ReLU(),
+            nn.MaxPool3d(kernel_size=(2, 2, 2), stride=(2, 2, 2)),
+            nn.Conv3d(in_channels=25, out_channels=125, kernel_size=(3, 3, 3), stride=1, dilation=3),
+            nn.ReLU(),
+            nn.MaxPool3d(kernel_size=(2, 2, 2), stride=(2, 2, 2)),
+            nn.Conv3d(in_channels=125, out_channels=500, kernel_size=(3, 3, 3), stride=1, dilation=3),
+            nn.ReLU(),
+            nn.AdaptiveAvgPool3d(output_size=(1, 1, 1)))
+
+        # Fully connected layer
+        self.seq_dense = nn.Sequential(
+            nn.Linear(500, 250),
+            nn.ReLU(),
+            nn.Linear(250, 125),
+            nn.ReLU(),
+            nn.Linear(125, 1),
+            nn.Sigmoid())
+
+    def forward(self, x):
+        x = self.seq_cnn(x)
+
+        x = torch.flatten(x, start_dim=1, end_dim=4)  # reduce dimensionality for LSTM layer, to 3D tensor
+        x = self.seq_dense(x)
+
+        return x
+
+
+class CNN3D_3(nn.Module):
+    def __init__(self):
+        super(CNN3D_3, self).__init__()
+
+        self.seq_cnn = nn.Sequential(
+            nn.Conv3d(in_channels=1, out_channels=5, kernel_size=(3, 3, 3), stride=(1, 1, 1), dilation=3),
+            nn.ReLU(),
+            nn.MaxPool3d(kernel_size=(2, 2, 2), stride=(2, 2, 2)),
+            nn.Conv3d(in_channels=5, out_channels=25, kernel_size=(3, 3, 3), stride=(1, 1, 1), dilation=3),
+            nn.ReLU(),
+            nn.MaxPool3d(kernel_size=(2, 2, 2), stride=(2, 2, 2)),
+            nn.Conv3d(in_channels=25, out_channels=125, kernel_size=(3, 3, 3), stride=1, dilation=3),
+            nn.ReLU(),
+            nn.MaxPool3d(kernel_size=(2, 2, 2), stride=(2, 2, 2)),
+            nn.Conv3d(in_channels=125, out_channels=250, kernel_size=(3, 3, 3), stride=1, dilation=3),
+            nn.ReLU(),
+            nn.Conv3d(in_channels=250, out_channels=1000, kernel_size=(3, 3, 3), stride=2, dilation=3),
+            nn.ReLU(),
+            nn.AdaptiveAvgPool3d(output_size=(1, 1, 1)))
+
+        # Fully connected layer
+        self.seq_dense = nn.Sequential(
+            nn.Linear(1000, 500),
+            nn.ReLU(),
+            nn.Linear(500, 250),
+            nn.ReLU(),
+            nn.Linear(250, 125),
+            nn.ReLU(),
+            nn.Linear(125, 1),
+            nn.Sigmoid())
+
+    def forward(self, x):
+        x = self.seq_cnn(x)
+
+        x = torch.flatten(x, start_dim=1, end_dim=4)  # reduce dimensionality for LSTM layer, to 3D tensor
+        x = self.seq_dense(x)
+
+        return x        

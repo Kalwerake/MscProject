@@ -4,9 +4,10 @@ import numpy as np
 import os
 import pickle
 
+
 from nn_functions import train_one_epoch_binary, validate_one_epoch_binary, EarlyStopper
-from models import CRNN5
-from custom_dataset import SurrDataset
+from models import CNN3D
+from custom_dataset import MRIDataset
 
 from torch.utils.data import DataLoader
 import torch.optim as optim
@@ -37,19 +38,19 @@ def main(train_path, test_path, data_dir, batch_size, lr, epochs, workers, model
     train_df = pd.read_csv(train_path)
     test_df = pd.read_csv(test_path)
 
-    train_data = SurrDataset(train_df, data_dir)
+    train_data = MRIDataset(train_df, data_dir)
     train_dataloader = DataLoader(train_data, batch_size=batch_size,
                                   shuffle=True,
                                   num_workers=workers)
 
-    test_data = SurrDataset(test_df, data_dir)
+    test_data = MRIDataset(test_df, data_dir)
     test_dataloader = DataLoader(test_data, batch_size=batch_size,
                                  shuffle=True,
                                  num_workers=workers)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    model = CRNN5()
+    model = CNN3D()
     loss_fn = nn.BCELoss()
     optimiser = optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-2)
 
@@ -88,7 +89,7 @@ def main(train_path, test_path, data_dir, batch_size, lr, epochs, workers, model
 
     torch.save(model.state_dict(), model_save)
 
-    metrics = {'train_acc_history': train_acc_history, 'train_loss_history': train_loss_history,
+    metrics = {'train_acc_history': train_acc_history, 'train_loss_hdistory': train_loss_history,
                'test_acc': test_acc_history, 'test_loss': test_loss_history}  # make dictionary of metrics
 
     with open(metric_path, 'wb') as handle:
