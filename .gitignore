@@ -9,25 +9,22 @@ rois_aal/
 rois_cc200/
 augmented_dataset/
 dfc_aug/
-dfc_cc200_70
+dfc_cc200/
+fc_cc200/
 func_ABIDE/
 gci_aal/
-gci_cc200/
+gci_ls_cc200/
 gci_nls_cc200/
 gci_aal_vectorised.npy
 gci_cc200_vectorised.npy
 gci_nls_cc200_vector.npy
 time_fig.png
-model_evaluation
+model_evaluation/
 images
+vectorised/
 conv4d.py
 # scrap notebooks
-CRNN5_1_1.ipynb
-CRNN5_mc.ipynb
-CRNN6.ipynb
-CRNN9.ipynb
-CRNN_dfc.ipynb
-dataset_explore.ipynb
+scrap_notebooks/
 EDA.ipynb
 embedding.ipynb
 gru only.ipynb
@@ -38,3 +35,4 @@ surr_vectorise.ipynb
 missing_value_explore.ipynb
 network_graphs.ipynb
 raw fmri.ipynb
+feature_extraction/dfc_exploration.ipynb

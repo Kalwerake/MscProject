@@ -1,14 +1,9 @@
-import pathlib
-
-from dfc_functions import FetchROI
 import os
-import pandas as pd
 import numpy as np
+
 from sklearn.preprocessing import normalize
 from numpy.linalg import eigh, pinv
 from statsmodels.tsa.api import VAR
-
-import argparse
 
 
 def gci(df):
@@ -22,7 +17,6 @@ def gci(df):
     _, rois = df.shape
     X = df.to_numpy()  #
     Xn = normalize(X)  # normalize X
-
 
     mvar = VAR(Xn)
     results = mvar.fit(2)  # fit model with maxlag of 2
@@ -38,7 +32,7 @@ def gci(df):
         results_minus = mvar_minus.fit(2)  # fit model with maxlag of 2
 
         E_m = results_minus.resid  # get error matrix of predictions without ith feature
-        E_minus = np.insert(E_m, i, 0, axis=1) # add a dummy column at removed column
+        E_minus = np.insert(E_m, i, 0, axis=1)  # add a dummy column at removed column
 
         for j in range(rois):
             if j != i:
@@ -102,48 +96,43 @@ def large_scale_gci(df, is_pd=True):
     return lsGCI
 
 
-def main(df_path, roi_dir, gci_dir, extension, large_scale):
-    pheno_df = pd.read_csv(df_path)
+class MatrixMean:
+    def __init__(self, df, data_dir, extension, binary=True):
+        """
+                    :param data_dir:
+                    :param df:
+                    :param extension: file extension and unique identifier after file id
+                    :return:
+                    """
+        self.df = df
+        self.data_dir = data_dir
+        self.ext = extension
 
-    subjects = pheno_df.FILE_ID
-    roi_files = [sub + extension for sub in subjects]
-
-    if '.1D' in extension:
-        fetch = FetchROI(roi_dir)
-
-    try:
-        os.mkdir(gci_dir)
-    except FileExistsError:
-        pass
-
-    for i, file in enumerate(roi_files):
-        matrix_name = subjects[i] + '_gci.npy'
-        matrix_path = os.path.join(gci_dir, matrix_name)
-        if '.1D' in extension:
-            data = fetch.fetch_roi_avg_ts(file)
+        self.groups = {}
+        if binary:
+            self.column_name = 'DX_GROUP'
+            self.groups['asd'] = 1
+            self.groups['control'] = 2
         else:
-            data = np.load(os.path.join(gci_dir, file))
+            self.column_name = 'DSM_IV_TR'
+            self.groups['mc_0'] = 0
+            self.groups['mc_1'] = 1
+            self.groups['mc_2'] = 2
+            self.groups['mc_3'] = 3
+            self.groups['mc_4'] = 4
 
-        if large_scale:
-            gci_matrix = large_scale_gci(data)
-        else:
-            gci_matrix = gci(data)
+    def mean_gci(self):
 
-        np.save(matrix_path, gci_matrix)
+        for name, label in self.groups.items():  # parse **groups obtain names, labels
 
+            file_ids = self.df[self.df[self.column_name] == label].FILE_ID  # get unique ids for all subject in class
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
-        prog='LargeScaleGranger',
-        description='Calculate and stores large scale granger causality')
+            files = [idx + self.ext for idx in file_ids]  # get file names for metrices
+            gci_paths = [os.path.join(self.data_dir,f) for f in files]
 
-    parser.add_argument('--df', help='path to description csv', type=pathlib.Path)
-    parser.add_argument('--data', help='path to time series data directory', type=pathlib.Path)
-    parser.add_argument('--save', help='save directory path', type=pathlib.Path)
-    parser.add_argument('--suffix', help='file name suffix after id', type=str)
-    parser.add_argument('--large', help='calculate large scale index or not', action='store_true')
-    parser.add_argument('--no-large', dest='foo', action='store_false')
+            all_matrices = [np.load(gci_paths[i]) for i in range(len(files))]  # stack each matrix into 3d list
+            mean = np.mean(np.array(all_matrices),
+                           axis=0)  # make 3d matrix into 3d numpy array and find elementwise mean
+            save_path = os.path.join(self.data_dir, f'{name}_mean.npy')  # path for saving mean matrix
 
-    args = parser.parse_args()
-
-    main(df_path=args.df, roi_dir=args.data, gci_dir=args.save, extension=args.suffix, large_scale=args.large)
+            np.save(save_path, mean)

@@ -1,9 +1,7 @@
 import pathlib
 import pandas as pd
-from dfc_functions import TwinSurrDFC
+from feature_extraction.dfc import TwinSurrDFC
 import argparse
-
-
 
 def main(df_path, data_dir, save_dir, window_length=70):
     df = pd.read_csv(df_path)

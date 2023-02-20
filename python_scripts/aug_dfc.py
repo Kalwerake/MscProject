@@ -1,6 +1,6 @@
 import pathlib
 import pandas as pd
-from dfc_functions import TwinSurrDFC
+from feature_extraction import TwinSurrDFC
 import argparse
 
 

@@ -7,6 +7,7 @@ pandas~=1.5.2
 statsmodels~=0.13.5
 nibabel~=5.0.0
 nilearn
+boruta
 git+https://github.com/manu-mannattil/nolitsa.git
 Cython==0.29.33
 git+https://github.com/pik-copan/pyunicorn.git
